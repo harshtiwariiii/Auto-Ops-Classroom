@@ -14,7 +14,18 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from pydantic import BaseModel
 from pathlib import Path
+from fastapi.middleware.cors import CORSMiddleware
 
+# -----------------------------------
+# 🔓 ENABLE CORS (Add this block here)
+# -----------------------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],       # Allow all origins (change later for production)
+    allow_credentials=True,
+    allow_methods=["*"],       # Allow all HTTP methods
+    allow_headers=["*"],       # Allow all headers
+)
 # ============================================================
 # BASIC APP + PATHS
 # ============================================================
