@@ -19,13 +19,13 @@ from fastapi.middleware.cors import CORSMiddleware
 # -----------------------------------
 # 🔓 ENABLE CORS (Add this block here)
 # -----------------------------------
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],       # Allow all origins (change later for production)
-    allow_credentials=True,
-    allow_methods=["*"],       # Allow all HTTP methods
-    allow_headers=["*"],       # Allow all headers
-)
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["*"],       # Allow all origins (change later for production)
+#     allow_credentials=True,
+#     allow_methods=["*"],       # Allow all HTTP methods
+#     allow_headers=["*"],       # Allow all headers
+# )
 # ============================================================
 # BASIC APP + PATHS
 # ============================================================
@@ -239,13 +239,85 @@ class NoteUpdate(BaseModel):
 # SKILL EXTRACTION
 # ============================================================
 SKILL_KEYWORDS = [
-    "python", "aws", "docker", "linux", "git", "mlops", "devops",
-    "java", "cloud", "azure", "gcp", "kubernetes",
-    "terraform", "ansible", "sql", "nosql",
-    "machine learning", "deep learning",
-    "pandas", "numpy", "scikit-learn",
-    "flask", "django", "rest api", "agile", "scrum",
+    # -------------------------
+    # Programming Languages
+    # -------------------------
+    "python", "java", "c", "c++", "c#", "golang", "go", "javascript", "typescript",
+    "ruby", "rust", "swift", "kotlin", "scala", "php", "r", "matlab",
+    "shell scripting", "bash", "powershell",
+
+    # -------------------------
+    # DevOps / Infra Tools
+    # -------------------------
+    "docker", "kubernetes", "helm", "terraform", "ansible", "chef", "puppet",
+    "jenkins", "gitlab ci", "github actions", "argocd", "fluxcd",
+    "prometheus", "grafana", "elastic stack", "elk", "nginx", "apache server",
+    "devops", "mlops", "sre", "site reliability engineering",
+
+    # -------------------------
+    # Cloud Platforms
+    # -------------------------
+    "aws", "azure", "gcp", "google cloud", "amazon web services",
+    "lambda", "ec2", "s3", "cloudwatch", "cloudformation",
+    "kinesis", "bigquery", "databricks", "cloud run", "firebase",
+
+    # -------------------------
+    # Data Engineering
+    # -------------------------
+    "sql", "nosql", "postgresql", "mysql", "mongodb", "redis", "cassandra",
+    "snowflake", "data warehouse", "etl", "elt", "airflow", "hadoop",
+    "spark", "hive", "kafka", "data engineering",
+
+    # -------------------------
+    # Machine Learning / AI
+    # -------------------------
+    "machine learning", "deep learning", "neural networks",
+    "pandas", "numpy", "scikit-learn", "tensorflow", "pytorch",
+    "opencv", "transformers", "nlp", "computer vision",
+    "llm", "large language models", "rag", "vector databases",
+    "huggingface", "model training", "hyperparameter tuning",
+
+    # -------------------------
+    # Web Development
+    # -------------------------
+    "html", "css", "react", "nextjs", "angular", "vue", "nodejs",
+    "express", "django", "flask", "fastapi", "rest api", "graphql",
+    "websockets", "responsive design", "bootstrap", "tailwind css",
+
+    # -------------------------
+    # Cybersecurity
+    # -------------------------
+    "ethical hacking", "network security", "penetration testing",
+    "nmap", "burpsuite", "owasp", "metasploit", "sql injection",
+    "firewall", "encryption", "cryptography", "cybersecurity",
+    "command line interface", "cli tools",
+
+    # -------------------------
+    # Computer Science Fundamentals
+    # -------------------------
+    "data structures", "algorithms", "operating systems", "dbms",
+    "networking", "computer networks", "os", "cn", "system design",
+    "oop", "object oriented programming", "distributed systems",
+
+    # -------------------------
+    # Tools / Version Control
+    # -------------------------
+    "git", "github", "gitlab", "jira", "confluence", "postman",
+    "swagger", "vim", "visual studio code", "intellij", "pycharm",
+
+    # -------------------------
+    # Data Science
+    # -------------------------
+    "statistics", "probability", "data visualization",
+    "matplotlib", "seaborn", "plotly", "feature engineering",
+    "data cleaning", "eda", "business intelligence",
+
+    # -------------------------
+    # Soft Skills (Optional)
+    # -------------------------
+    "communication", "teamwork", "leadership", "agile", "scrum", "presentation skills",
 ]
+
 
 try:
     nlp = spacy.load("en_core_web_sm")
