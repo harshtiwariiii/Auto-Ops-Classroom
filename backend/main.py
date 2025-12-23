@@ -234,6 +234,23 @@ class ProgressUpdate(BaseModel):
 class NoteUpdate(BaseModel):
     notes: str
 
+class CourseUpdate(BaseModel):
+    course_name: Optional[str] = None
+    course_details: Optional[str] = None
+
+
+class ModuleUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+
+
+class LessonUpdate(BaseModel):
+    title: Optional[str] = None
+    video_url: Optional[str] = None
+    notes: Optional[str] = None
+    difficulty: Optional[str] = None
+    github_url: Optional[str] = None
+
 
 # ============================================================
 # SKILL EXTRACTION
@@ -542,6 +559,31 @@ def add_course(req: dict, user=Depends(require_role(["teacher"]))):
 
     return {"message": "Course added", "course_id": cid}
 
+@app.put("/courses/{course_id}")
+def update_course(course_id: int, payload: CourseUpdate, user=Depends(require_role(["teacher"]))):
+    conn = db("courses.db")
+    cur = conn.cursor()
+
+    cur.execute("SELECT course_name, course_details FROM courses WHERE course_id=?", (course_id,))
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    current_name, current_details = row
+    new_name = payload.course_name or current_name
+    new_details = payload.course_details if payload.course_details is not None else current_details
+
+    cur.execute(
+        "UPDATE courses SET course_name=?, course_details=? WHERE course_id=?",
+        (new_name, new_details, course_id),
+    )
+    conn.commit()
+    conn.close()
+
+    return {"message": "Course updated successfully"}
+
+
 
 @app.get("/courses")
 def get_courses(user=Depends(get_current_user)):
@@ -638,6 +680,31 @@ def add_module(course_id: int, req: dict, user=Depends(require_role(["teacher"])
 
     return {"message": "Module added successfully"}
 
+@app.put("/modules/{module_id}")
+def update_module(module_id: int, payload: ModuleUpdate, user=Depends(require_role(["teacher"]))):
+    conn = db("courses.db")
+    cur = conn.cursor()
+
+    cur.execute("SELECT title, description FROM modules WHERE module_id=?", (module_id,))
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Module not found")
+
+    current_title, current_desc = row
+    new_title = payload.title or current_title
+    new_desc = payload.description if payload.description is not None else current_desc
+
+    cur.execute(
+        "UPDATE modules SET title=?, description=? WHERE module_id=?",
+        (new_title, new_desc, module_id),
+    )
+    conn.commit()
+    conn.close()
+
+    return {"message": "Module updated successfully"}
+
+
 
 
 @app.post("/modules/{module_id}/add-lesson")
@@ -661,6 +728,69 @@ def add_lesson(module_id: int, req: dict, user=Depends(require_role(["teacher"])
     conn.close()
 
     return {"message": "Lesson added successfully"}
+
+@app.put("/lessons/{lesson_id}")
+def update_lesson(lesson_id: int, payload: LessonUpdate, user=Depends(require_role(["teacher"]))):
+    conn = db("courses.db")
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT title, video_url, notes, difficulty, github_url
+        FROM lessons
+        WHERE lesson_id=?
+    """, (lesson_id,))
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    current_title, current_vid, current_notes, current_diff, current_git = row
+
+    new_title = payload.title or current_title
+    new_vid = payload.video_url if payload.video_url is not None else current_vid
+    new_notes = payload.notes if payload.notes is not None else current_notes
+    new_diff = payload.difficulty or current_diff
+    new_git = payload.github_url if payload.github_url is not None else current_git
+
+    cur.execute("""
+        UPDATE lessons
+        SET title=?, video_url=?, notes=?, difficulty=?, github_url=?
+        WHERE lesson_id=?
+    """, (new_title, new_vid, new_notes, new_diff, new_git, lesson_id))
+
+    conn.commit()
+    conn.close()
+
+    return {"message": "Lesson updated successfully"}
+
+
+@app.get("/modules/{module_id}/lessons")
+def get_lessons_for_module(module_id: int, user=Depends(require_role(["teacher"]))):
+    conn = db("courses.db")
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT lesson_id, title, video_url, notes, difficulty, order_index, github_url
+        FROM lessons
+        WHERE module_id=?
+        ORDER BY order_index, lesson_id
+    """, (module_id,))
+    rows = cur.fetchall()
+    conn.close()
+
+    lessons = [
+        {
+            "lesson_id": r[0],
+            "title": r[1],
+            "video_url": r[2] or "",
+            "notes": r[3] or "",
+            "difficulty": r[4] or "Easy",
+            "order_index": r[5],
+            "github_url": r[6] or "",
+        }
+        for r in rows
+    ]
+    return {"lessons": lessons}
+
 
 
 @app.get("/courses/{course_id}/modules")

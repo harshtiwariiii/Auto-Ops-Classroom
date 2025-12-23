@@ -699,7 +699,10 @@ def teacher_add_module():
         """
         <div class="card" style="margin-bottom:1.2rem;">
             <div class="card-header">Teacher dashboard</div>
-            <h1 style="margin-top:0.3rem;">Add module to a course</h1>
+            <h1 style="margin-top:0.3rem;">Manage modules</h1>
+            <p style="color:var(--text-muted); max-width:640px; margin-top:0.3rem;">
+                Add new modules and edit existing ones for each course.
+            </p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -717,10 +720,9 @@ def teacher_add_module():
 
     course_names = [c["course_name"] for c in courses]
     selected = st.selectbox("Select Course", course_names)
-
     course_id = next(c["course_id"] for c in courses if c["course_name"] == selected)
 
-    st.write("### Module Details")
+    st.subheader("➕ Add new module")
     title = st.text_input("Module Title")
     desc = st.text_area("Module Description")
 
@@ -732,8 +734,48 @@ def teacher_add_module():
         )
         if res and res.status_code == 200:
             st.success("Module added successfully!")
+            st.rerun()
         else:
             st.error("Failed to add module.")
+
+    st.markdown("<hr />", unsafe_allow_html=True)
+    st.subheader("✏️ Edit existing modules")
+
+    modules_res = api_request("GET", f"/courses/{course_id}/modules")
+    if not modules_res or modules_res.status_code != 200:
+        st.error("Could not load modules.")
+        return
+
+    modules = modules_res.json()["modules"]
+    if not modules:
+        st.info("No modules for this course yet.")
+        return
+
+    for m in modules:
+        with st.expander(f"Module: {m['title']}"):
+            new_title = st.text_input(
+                "Module title",
+                value=m["title"],
+                key=f"mod_title_{m['module_id']}",
+            )
+            new_desc = st.text_area(
+                "Module description",
+                value=m["description"],
+                key=f"mod_desc_{m['module_id']}",
+            )
+
+            if st.button("Save changes", key=f"mod_save_{m['module_id']}"):
+                res = api_request(
+                    "PUT",
+                    f"/modules/{m['module_id']}",
+                    json={"title": new_title, "description": new_desc},
+                )
+                if res and res.status_code == 200:
+                    st.success("Module updated.")
+                    st.rerun()
+                else:
+                    st.error("Failed to update module.")
+
 
 
 
@@ -745,7 +787,10 @@ def teacher_add_lesson():
         """
         <div class="card" style="margin-bottom:1.2rem;">
             <div class="card-header">Teacher dashboard</div>
-            <h1 style="margin-top:0.3rem;">Add lesson to a module</h1>
+            <h1 style="margin-top:0.3rem;">Manage lessons</h1>
+            <p style="color:var(--text-muted); max-width:640px; margin-top:0.3rem;">
+                Add new lessons and edit existing ones inside your modules.
+            </p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -763,7 +808,6 @@ def teacher_add_lesson():
 
     course_names = [c["course_name"] for c in courses]
     selected_course = st.selectbox("Select Course", course_names)
-
     course_id = next(c["course_id"] for c in courses if c["course_name"] == selected_course)
 
     modules_res = api_request("GET", f"/courses/{course_id}/modules")
@@ -778,16 +822,14 @@ def teacher_add_lesson():
 
     module_titles = [m["title"] for m in modules]
     selected_module = st.selectbox("Select Module", module_titles)
-
     module_id = next(m["module_id"] for m in modules if m["title"] == selected_module)
 
-    st.write("### Lesson Details")
+    st.subheader("➕ Add new lesson")
     title = st.text_input("Lesson Title")
     video_url = st.text_input("Video URL (YouTube)")
     notes = st.text_area("Lesson Notes")
     difficulty = st.selectbox("Difficulty", ["Easy", "Medium", "Hard"])
     github_url = st.text_input("GitHub Repository Link (optional)")
-
 
     if st.button("Add Lesson"):
         res = api_request(
@@ -803,8 +845,72 @@ def teacher_add_lesson():
         )
         if res and res.status_code == 200:
             st.success("Lesson added successfully!")
+            st.rerun()
         else:
             st.error("Failed to add lesson.")
+
+    st.markdown("<hr />", unsafe_allow_html=True)
+    st.subheader("✏️ Edit existing lessons")
+
+    lessons_res = api_request("GET", f"/modules/{module_id}/lessons")
+    if not lessons_res or lessons_res.status_code != 200:
+        st.error("Could not load lessons.")
+        return
+
+    lessons = lessons_res.json()["lessons"]
+    if not lessons:
+        st.info("No lessons in this module yet.")
+        return
+
+    for lesson in lessons:
+        with st.expander(f"Lesson: {lesson['title']}"):
+            new_title = st.text_input(
+                "Lesson title",
+                value=lesson["title"],
+                key=f"lesson_title_{lesson['lesson_id']}",
+            )
+            new_video = st.text_input(
+                "Video URL",
+                value=lesson["video_url"],
+                key=f"lesson_video_{lesson['lesson_id']}",
+            )
+            new_notes = st.text_area(
+                "Lesson notes",
+                value=lesson["notes"],
+                key=f"lesson_notes_{lesson['lesson_id']}",
+            )
+            new_diff = st.selectbox(
+                "Difficulty",
+                ["Easy", "Medium", "Hard"],
+                index=["Easy", "Medium", "Hard"].index(lesson["difficulty"])
+                if lesson["difficulty"] in ["Easy", "Medium", "Hard"]
+                else 0,
+                key=f"lesson_diff_{lesson['lesson_id']}",
+            )
+            new_git = st.text_input(
+                "GitHub URL",
+                value=lesson["github_url"],
+                key=f"lesson_git_{lesson['lesson_id']}",
+            )
+
+            if st.button("Save lesson", key=f"lesson_save_{lesson['lesson_id']}"):
+                res = api_request(
+                    "PUT",
+                    f"/lessons/{lesson['lesson_id']}",
+                    json={
+                        "title": new_title,
+                        "video_url": new_video,
+                        "notes": new_notes,
+                        "difficulty": new_diff,
+                        "github_url": new_git,
+                    },
+                )
+                if res and res.status_code == 200:
+                    st.success("Lesson updated.")
+                    st.rerun()
+                else:
+                    st.error("Failed to update lesson.")
+
 
 # ------------------------------------------------------
 # MAIN ROUTING
